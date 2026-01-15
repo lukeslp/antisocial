@@ -95,6 +95,11 @@ platforms:
     enabled: true
     url_template: "https://steamcommunity.com/id/{username}"
     verification_method: http
+    not_found_indicators:
+      - "The specified profile could not be found"
+      - "This user has not yet set up their Steam Community profile"
+      - "error_ctn"
+      - "profile_private_info"
   gitlab:
     name: GitLab
     category: development
