@@ -8,6 +8,7 @@ class SearchCreate(BaseModel):
     username: str
     tiers: Optional[List[int]] = [1, 2, 3]
     min_confidence: Optional[int] = 0
+    deep_search: Optional[bool] = False  # Enable WhatsMyName (765+ platforms, slower)
 
 class SearchResponse(BaseModel):
     id: int

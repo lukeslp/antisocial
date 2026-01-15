@@ -35,10 +35,11 @@ platforms:
   twitter:
     name: Twitter/X
     category: social
-    tier: 2
+    tier: 1
     enabled: true
     url_template: "https://twitter.com/{username}"
-    verification_method: browser
+    api_endpoint: "https://api.x.com/i/users/username_available.json?username={username}"
+    verification_method: api
   instagram:
     name: Instagram
     category: social
@@ -49,10 +50,11 @@ platforms:
   tiktok:
     name: TikTok
     category: social
-    tier: 2
+    tier: 1
     enabled: true
     url_template: "https://tiktok.com/@{username}"
-    verification_method: browser
+    api_endpoint: "https://www.tiktok.com/oembed?url=https://www.tiktok.com/@{username}"
+    verification_method: api
   facebook:
     name: Facebook
     category: social

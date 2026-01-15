@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Search as SearchIcon } from "lucide-react";
+import { Search as SearchIcon, Globe } from "lucide-react";
 import { useState } from "react";
 import { api } from "@/lib/api";
 import { useLocation } from "wouter";
@@ -10,6 +12,7 @@ export default function Search() {
   const [, setLocation] = useLocation();
   const [username, setUsername] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [deepSearch, setDeepSearch] = useState(false);
 
   const handleSearch = async () => {
     if (!username.trim()) {
@@ -21,9 +24,10 @@ export default function Search() {
     try {
       const search = await api.createSearch({
         username: username.trim(),
+        deep_search: deepSearch,
       });
-      
-      toast.success(`Search started for @${username}`);
+
+      toast.success(`Search started for @${username}${deepSearch ? ' (deep search)' : ''}`);
       setLocation(`/results/${search.id}`);
     } catch (error: any) {
       toast.error(error.message || "Failed to start search");
@@ -57,8 +61,8 @@ export default function Search() {
                 className="text-lg h-12"
                 autoFocus
               />
-              <Button 
-                onClick={handleSearch} 
+              <Button
+                onClick={handleSearch}
                 disabled={isSearching}
                 size="lg"
                 className="px-8 h-12"
@@ -76,8 +80,29 @@ export default function Search() {
                 )}
               </Button>
             </div>
+
+            {/* Deep Search Toggle */}
+            <div className="flex items-center justify-center gap-3 p-3 rounded-lg bg-card/50 border border-border/50">
+              <Switch
+                id="deep-search"
+                checked={deepSearch}
+                onCheckedChange={setDeepSearch}
+              />
+              <Label htmlFor="deep-search" className="flex items-center gap-2 cursor-pointer">
+                <Globe className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm">
+                  Deep Search
+                  <span className="text-muted-foreground ml-1">
+                    ({deepSearch ? '765+' : '24'} platforms)
+                  </span>
+                </span>
+              </Label>
+            </div>
+
             <p className="text-sm text-muted-foreground">
-              We'll check username variations across all major platforms
+              {deepSearch
+                ? 'Searching 765+ platforms via WhatsMyName database (slower, more thorough)'
+                : 'Quick search across 24 major platforms'}
             </p>
           </div>
 
