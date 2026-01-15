@@ -27,6 +27,10 @@ class APIVerifier(BaseVerifier):
                     return await self._verify_bluesky(client, url, username)
                 elif self.platform.id == "medium":
                     return await self._verify_medium(client, url, username)
+                elif self.platform.id == "tiktok":
+                    return await self._verify_tiktok(client, username)
+                elif self.platform.id == "twitter":
+                    return await self._verify_twitter(client, username)
                 else:
                     return await self._verify_generic(client, url, username, headers)
                     
@@ -154,10 +158,61 @@ class APIVerifier(BaseVerifier):
         else:
             return self._create_result(username, False, 0, error=f"HTTP {response.status_code}")
     
+    async def _verify_tiktok(self, client: httpx.AsyncClient, username: str) -> VerificationResult:
+        """Verify TikTok user via oEmbed API."""
+        # TikTok oEmbed API - no auth required
+        url = f"https://www.tiktok.com/oembed?url=https://www.tiktok.com/@{username}"
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+
+        try:
+            response = await client.get(url, headers=headers)
+
+            if response.status_code == 200:
+                data = response.json()
+                if "author_url" in data:
+                    return self._create_result(
+                        username=username,
+                        found=True,
+                        confidence=100,
+                        display_name=data.get("author_name"),
+                        bio=data.get("title")
+                    )
+            elif response.status_code == 400:
+                # Account doesn't exist
+                return self._create_result(username, False, 0)
+        except Exception:
+            pass
+
+        return self._create_result(username, False, 0)
+
+    async def _verify_twitter(self, client: httpx.AsyncClient, username: str) -> VerificationResult:
+        """Verify Twitter/X user via username availability API."""
+        url = f"https://api.x.com/i/users/username_available.json?username={username}"
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+
+        try:
+            response = await client.get(url, headers=headers)
+
+            if response.status_code == 200:
+                data = response.json()
+                # "taken" means account exists, "available" means it doesn't
+                if data.get("reason") == "taken":
+                    return self._create_result(
+                        username=username,
+                        found=True,
+                        confidence=100
+                    )
+                elif data.get("reason") == "available":
+                    return self._create_result(username, False, 0)
+        except Exception:
+            pass
+
+        return self._create_result(username, False, 0)
+
     async def _verify_generic(self, client: httpx.AsyncClient, url: str, username: str, headers: dict) -> VerificationResult:
         """Generic API verification."""
         response = await client.get(url, headers=headers)
-        
+
         if response.status_code == 200:
             return self._create_result(username, True, settings.api_confidence)
         elif response.status_code == 404:

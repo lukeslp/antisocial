@@ -1,5 +1,5 @@
 // API client for Account Discovery Tool backend
-const API_BASE = import.meta.env.VITE_API_URL || 'https://8001-ixfpl62aa2q78d794taia-a2cb330e.us2.manus.computer';
+const API_BASE = import.meta.env.VITE_API_URL || '/social-scout';
 
 export interface Platform {
   id: string;
@@ -80,6 +80,7 @@ export const api = {
     username: string;
     tiers?: number[];
     min_confidence?: number;
+    deep_search?: boolean;  // Enable WhatsMyName (765+ platforms)
   }): Promise<Search> => {
     return fetchApi('/api/searches', {
       method: 'POST',

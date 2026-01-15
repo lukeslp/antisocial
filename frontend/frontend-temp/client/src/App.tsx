@@ -1,15 +1,17 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, Router as WouterRouter } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Search from "./pages/Search";
 import Results from "./pages/Results";
 import Navigation from "./components/Navigation";
 
+// Base path for deployment under /social-scout/
+const BASE_PATH = "/social-scout";
 
-function Router() {
+function Routes() {
   return (
     <>
       <Navigation />
@@ -21,6 +23,14 @@ function Router() {
         <Route component={NotFound} />
       </Switch>
     </>
+  );
+}
+
+function Router() {
+  return (
+    <WouterRouter base={BASE_PATH}>
+      <Routes />
+    </WouterRouter>
   );
 }
 

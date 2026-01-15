@@ -39,15 +39,15 @@ app.add_middleware(
 )
 
 # Background task for running searches
-async def run_search_task(search_id: int, username: str, tiers: list, min_confidence: int):
+async def run_search_task(search_id: int, username: str, tiers: list, min_confidence: int, use_wmn: bool = False):
     """Background task to run a search."""
     from backend.db.session import async_session
-    
+
     async with async_session() as db:
         checked = 0
         found = 0
-        
-        async for result in search_username(username, tiers, min_confidence):
+
+        async for result in search_username(username, tiers, min_confidence, use_wmn=use_wmn):
             checked += 1
             # Only save accounts that meet criteria
             if result.found and result.confidence_score >= min_confidence:
@@ -66,13 +66,25 @@ async def run_search_task(search_id: int, username: str, tiers: list, min_confid
                     confidence_score=result.confidence_score,
                 )
             await crud.update_search_progress(db, search_id, checked, found)
-        
-        # Mark as completed
-        platforms_total = len(registry.get_enabled_platforms(tiers))
-        await crud.update_search_progress(db, search_id, platforms_total, found)
+
+        # Mark as completed (use actual checked count, not recalculated total)
         await crud.complete_search(db, search_id)
 
 # API Routes
+
+@app.get("/")
+async def root():
+    """Root endpoint."""
+    return {
+        "app": settings.app_name,
+        "docs": "/docs",
+        "health": "/api/health",
+        "endpoints": {
+            "search": "POST /api/searches",
+            "results": "GET /api/searches/{id}/results",
+            "platforms": "GET /api/platforms"
+        }
+    }
 
 @app.get("/api/health")
 async def health_check():
@@ -92,20 +104,30 @@ async def create_search(
     db: AsyncSession = Depends(get_db)
 ):
     """Create a new username search."""
+    from backend.core.whatsmyname import get_wmn_loader
+
     platforms = registry.get_enabled_platforms(search_data.tiers)
-    # WMN is disabled by default for speed, so only count registry platforms
     total_platforms = len(platforms)
+
+    # If deep search enabled, add WhatsMyName platforms
+    if search_data.deep_search:
+        wmn_loader = get_wmn_loader()
+        registry_names = {p.name.lower() for p in platforms}
+        wmn_sites = [s for s in wmn_loader.get_all_sites() if s.name.lower() not in registry_names]
+        total_platforms += len(wmn_sites)
+
     search = await crud.create_search(db, search_data.username, total_platforms)
-    
+
     # Start background search task
     background_tasks.add_task(
         run_search_task,
         search.id,
         search_data.username,
         search_data.tiers,
-        search_data.min_confidence
+        search_data.min_confidence,
+        search_data.deep_search  # Pass deep_search as use_wmn
     )
-    
+
     return search
 
 @app.get("/api/searches", response_model=SearchListResponse)

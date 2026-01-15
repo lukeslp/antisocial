@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List, Optional
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.db.models import Search, Account
+from backend.db.models import Search, Account, PlatformCheck
 
 # Search operations
 async def create_search(db: AsyncSession, username: str, platforms_total: int) -> Search:
