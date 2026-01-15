@@ -1,0 +1,174 @@
+# Platform Registry Configuration
+platforms:
+  github:
+    name: GitHub
+    category: development
+    tier: 1
+    enabled: true
+    url_template: "https://github.com/{username}"
+    api_endpoint: "https://api.github.com/users/{username}"
+    verification_method: api
+  reddit:
+    name: Reddit
+    category: social
+    tier: 1
+    enabled: true
+    url_template: "https://reddit.com/user/{username}"
+    api_endpoint: "https://www.reddit.com/user/{username}/about.json"
+    verification_method: api
+  bluesky:
+    name: Bluesky
+    category: social
+    tier: 1
+    enabled: true
+    url_template: "https://bsky.app/profile/{username}"
+    api_endpoint: "https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor={username}"
+    verification_method: api
+  medium:
+    name: Medium
+    category: blogging
+    tier: 1
+    enabled: true
+    url_template: "https://medium.com/@{username}"
+    api_endpoint: "https://medium.com/@{username}?format=json"
+    verification_method: api
+  twitter:
+    name: Twitter/X
+    category: social
+    tier: 2
+    enabled: true
+    url_template: "https://twitter.com/{username}"
+    verification_method: browser
+  instagram:
+    name: Instagram
+    category: social
+    tier: 2
+    enabled: true
+    url_template: "https://instagram.com/{username}"
+    verification_method: browser
+  tiktok:
+    name: TikTok
+    category: social
+    tier: 2
+    enabled: true
+    url_template: "https://tiktok.com/@{username}"
+    verification_method: browser
+  facebook:
+    name: Facebook
+    category: social
+    tier: 2
+    enabled: true
+    url_template: "https://facebook.com/{username}"
+    verification_method: browser
+  linkedin:
+    name: LinkedIn
+    category: professional
+    tier: 2
+    enabled: true
+    url_template: "https://linkedin.com/in/{username}"
+    verification_method: browser
+  pinterest:
+    name: Pinterest
+    category: social
+    tier: 2
+    enabled: true
+    url_template: "https://pinterest.com/{username}"
+    verification_method: browser
+  youtube:
+    name: YouTube
+    category: video
+    tier: 2
+    enabled: true
+    url_template: "https://youtube.com/@{username}"
+    verification_method: browser
+  twitch:
+    name: Twitch
+    category: streaming
+    tier: 2
+    enabled: true
+    url_template: "https://twitch.tv/{username}"
+    verification_method: browser
+  steam:
+    name: Steam
+    category: gaming
+    tier: 3
+    enabled: true
+    url_template: "https://steamcommunity.com/id/{username}"
+    verification_method: http
+  gitlab:
+    name: GitLab
+    category: development
+    tier: 3
+    enabled: true
+    url_template: "https://gitlab.com/{username}"
+    verification_method: http
+  patreon:
+    name: Patreon
+    category: creator
+    tier: 3
+    enabled: true
+    url_template: "https://patreon.com/{username}"
+    verification_method: http
+  soundcloud:
+    name: SoundCloud
+    category: music
+    tier: 3
+    enabled: true
+    url_template: "https://soundcloud.com/{username}"
+    verification_method: http
+  devto:
+    name: DEV.to
+    category: development
+    tier: 3
+    enabled: true
+    url_template: "https://dev.to/{username}"
+    verification_method: http
+  dribbble:
+    name: Dribbble
+    category: design
+    tier: 3
+    enabled: true
+    url_template: "https://dribbble.com/{username}"
+    verification_method: http
+  behance:
+    name: Behance
+    category: design
+    tier: 3
+    enabled: true
+    url_template: "https://behance.net/{username}"
+    verification_method: http
+  vimeo:
+    name: Vimeo
+    category: video
+    tier: 3
+    enabled: true
+    url_template: "https://vimeo.com/{username}"
+    verification_method: http
+  tumblr:
+    name: Tumblr
+    category: blogging
+    tier: 3
+    enabled: true
+    url_template: "https://{username}.tumblr.com"
+    verification_method: http
+  mastodon:
+    name: Mastodon
+    category: social
+    tier: 3
+    enabled: true
+    url_template: "https://mastodon.social/@{username}"
+    verification_method: http
+  keybase:
+    name: Keybase
+    category: security
+    tier: 3
+    enabled: true
+    url_template: "https://keybase.io/{username}"
+    verification_method: http
+  gravatar:
+    name: Gravatar
+    category: personal
+    tier: 3
+    enabled: true
+    url_template: "https://gravatar.com/{username}"
+    verification_method: http
