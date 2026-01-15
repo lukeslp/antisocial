@@ -17,9 +17,14 @@ import {
   AlertTriangle,
   Info,
   Download,
+  ChevronDown,
+  ChevronUp,
+  Search as SearchIcon,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { api, Search, Account } from "@/lib/api";
+import { api, Search, Account, PlatformCheck } from "@/lib/api";
 import { useRoute } from "wouter";
 import { PlatformIcon, PlatformBadge } from "@/components/PlatformIcon";
 import { DeletionGuideDialog } from "@/components/DeletionGuideDialog";
@@ -30,6 +35,8 @@ export default function Results() {
   
   const [search, setSearch] = useState<Search | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [negativeChecks, setNegativeChecks] = useState<PlatformCheck[]>([]);
+  const [showNegativeResults, setShowNegativeResults] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,7 +54,7 @@ export default function Results() {
 
   const loadData = async () => {
     if (!searchId) return;
-    
+
     try {
       const [searchData, resultsData] = await Promise.all([
         api.getSearch(searchId),
@@ -55,6 +62,12 @@ export default function Results() {
       ]);
       setSearch(searchData);
       setAccounts(resultsData.accounts);
+
+      // Load negative checks when search is completed
+      if (searchData.status === 'completed') {
+        const checksData = await api.getSearchChecks(searchId, false);
+        setNegativeChecks(checksData.checks);
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to load search results");
     } finally {
@@ -74,6 +87,25 @@ export default function Results() {
       toast.success(isCorrect ? "Marked as yours" : "Marked as incorrect");
     } catch (error: any) {
       toast.error(error.message || "Failed to update account");
+    }
+  };
+
+  const handleFeedback = async (accountId: number, feedback: number) => {
+    try {
+      const account = accounts.find(a => a.id === accountId);
+      // Toggle off if clicking same feedback
+      const newFeedback = account?.accuracy_feedback === feedback ? 0 : feedback;
+      await api.submitFeedback(accountId, newFeedback);
+      setAccounts(prev =>
+        prev.map(acc =>
+          acc.id === accountId ? { ...acc, accuracy_feedback: newFeedback } : acc
+        )
+      );
+      if (newFeedback === 1) toast.success("Marked as accurate");
+      else if (newFeedback === -1) toast.success("Marked as inaccurate");
+      else toast.success("Feedback cleared");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to submit feedback");
     }
   };
 
@@ -282,7 +314,7 @@ export default function Results() {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <Button
                           size="sm"
                           variant="outline"
@@ -297,6 +329,48 @@ export default function Results() {
                           platformName={account.platform_name}
                           profileUrl={account.profile_url}
                         />
+
+                        {/* Accuracy Feedback */}
+                        <div className="flex items-center gap-1 ml-2">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className={`p-2 ${
+                                  account.accuracy_feedback === 1
+                                    ? 'text-green-500 bg-green-500/10'
+                                    : 'text-muted-foreground hover:text-green-500'
+                                }`}
+                                onClick={() => handleFeedback(account.id, 1)}
+                              >
+                                <ThumbsUp className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>This result is accurate</p>
+                            </TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className={`p-2 ${
+                                  account.accuracy_feedback === -1
+                                    ? 'text-red-500 bg-red-500/10'
+                                    : 'text-muted-foreground hover:text-red-500'
+                                }`}
+                                onClick={() => handleFeedback(account.id, -1)}
+                              >
+                                <ThumbsDown className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>This result is inaccurate</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
 
                         {account.status === 'pending' && (
                           <>
@@ -342,6 +416,52 @@ export default function Results() {
             <p className="text-sm text-muted-foreground">
               Search complete. Mark accounts as yours to include them in your export report.
             </p>
+          </div>
+        )}
+
+        {/* Negative Results - Platforms Checked but Not Found */}
+        {search.status === 'completed' && negativeChecks.length > 0 && (
+          <div className="mt-6">
+            <Button
+              variant="ghost"
+              className="w-full flex items-center justify-between p-4 rounded-lg bg-card/30 border border-border/50 hover:bg-card/50"
+              onClick={() => setShowNegativeResults(!showNegativeResults)}
+            >
+              <div className="flex items-center gap-2">
+                <SearchIcon className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  {negativeChecks.length} platforms checked - no account found
+                </span>
+              </div>
+              {showNegativeResults ? (
+                <ChevronUp className="w-4 h-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              )}
+            </Button>
+
+            {showNegativeResults && (
+              <div className="mt-3 p-4 rounded-lg bg-card/20 border border-border/30">
+                <p className="text-xs text-muted-foreground mb-3">
+                  These platforms were searched but no matching account was found.
+                  Click to double-check manually if you think we may have missed something.
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                  {negativeChecks.map((check) => (
+                    <a
+                      key={check.id}
+                      href={check.profile_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 p-2 rounded bg-card/30 hover:bg-card/50 transition-colors text-sm text-muted-foreground hover:text-foreground"
+                    >
+                      <PlatformIcon platformId={check.platform_id} size="sm" />
+                      <span className="truncate">{check.platform_name}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

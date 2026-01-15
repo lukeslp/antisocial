@@ -13,7 +13,9 @@ from backend.core.search import search_username
 from backend.api.schemas import (
     SearchCreate, SearchResponse, SearchListResponse,
     AccountResponse, AccountListResponse, AccountUpdate, BulkAccountUpdate,
-    StatsResponse, PlatformResponse, PlatformListResponse
+    AccountFeedback, PlatformAccuracyListResponse,
+    StatsResponse, PlatformResponse, PlatformListResponse,
+    PlatformCheckResponse, PlatformCheckListResponse
 )
 
 @asynccontextmanager
@@ -49,6 +51,17 @@ async def run_search_task(search_id: int, username: str, tiers: list, min_confid
 
         async for result in search_username(username, tiers, min_confidence, use_wmn=use_wmn):
             checked += 1
+
+            # Record every platform check (found or not)
+            await crud.create_platform_check(
+                db,
+                search_id=search_id,
+                platform_id=result.platform_id,
+                platform_name=result.platform_name,
+                profile_url=result.profile_url,
+                found=result.found and result.confidence_score >= min_confidence
+            )
+
             # Only save accounts that meet criteria
             if result.found and result.confidence_score >= min_confidence:
                 found += 1
@@ -150,6 +163,16 @@ async def get_search_results(search_id: int, db: AsyncSession = Depends(get_db))
     accounts = await crud.get_accounts_by_search(db, search_id)
     return {"accounts": accounts}
 
+@app.get("/api/searches/{search_id}/checks", response_model=PlatformCheckListResponse)
+async def get_platform_checks(
+    search_id: int,
+    found: bool = None,
+    db: AsyncSession = Depends(get_db)
+):
+    """Get platform checks for a search (both found and not found)."""
+    checks = await crud.get_platform_checks(db, search_id, found)
+    return {"checks": checks}
+
 # Account endpoints
 @app.get("/api/accounts", response_model=AccountListResponse)
 async def list_accounts(status: str = "all", db: AsyncSession = Depends(get_db)):
@@ -187,6 +210,29 @@ async def bulk_update_accounts(
     """Bulk update account statuses."""
     await crud.bulk_update_accounts(db, update_data.account_ids, update_data.status)
     return {"updated": len(update_data.account_ids)}
+
+@app.post("/api/accounts/{account_id}/feedback", response_model=AccountResponse)
+async def submit_account_feedback(
+    account_id: int,
+    feedback_data: AccountFeedback,
+    db: AsyncSession = Depends(get_db)
+):
+    """Submit accuracy feedback for an account (1=correct, -1=incorrect, 0=clear)."""
+    account = await crud.get_account(db, account_id)
+    if not account:
+        raise HTTPException(status_code=404, detail="Account not found")
+
+    if feedback_data.feedback not in [-1, 0, 1]:
+        raise HTTPException(status_code=400, detail="Feedback must be -1, 0, or 1")
+
+    await crud.update_account_feedback(db, account_id, feedback_data.feedback)
+    return await crud.get_account(db, account_id)
+
+@app.get("/api/accuracy", response_model=PlatformAccuracyListResponse)
+async def get_platform_accuracy(db: AsyncSession = Depends(get_db)):
+    """Get accuracy statistics per platform."""
+    stats = await crud.get_platform_accuracy_stats(db)
+    return {"platforms": stats}
 
 # Platform endpoints
 @app.get("/api/platforms", response_model=PlatformListResponse)

@@ -89,14 +89,56 @@ async def bulk_update_accounts(db: AsyncSession, account_ids: List[int], status:
     )
     await db.commit()
 
+
+async def update_account_feedback(db: AsyncSession, account_id: int, feedback: int):
+    """Update account accuracy feedback (-1, 0, or 1)."""
+    await db.execute(
+        update(Account)
+        .where(Account.id == account_id)
+        .values(accuracy_feedback=feedback)
+    )
+    await db.commit()
+
+
+async def get_platform_accuracy_stats(db: AsyncSession) -> List[dict]:
+    """Get accuracy statistics per platform."""
+    from sqlalchemy import func, case
+
+    result = await db.execute(
+        select(
+            Account.platform_id,
+            Account.platform_name,
+            func.count(Account.id).label('total'),
+            func.sum(case((Account.accuracy_feedback == 1, 1), else_=0)).label('thumbs_up'),
+            func.sum(case((Account.accuracy_feedback == -1, 1), else_=0)).label('thumbs_down'),
+            func.sum(case((Account.accuracy_feedback == 0, 1), else_=0)).label('no_feedback'),
+        )
+        .group_by(Account.platform_id, Account.platform_name)
+        .order_by(func.count(Account.id).desc())
+    )
+    rows = result.all()
+
+    return [
+        {
+            "platform_id": row.platform_id,
+            "platform_name": row.platform_name,
+            "total": row.total,
+            "thumbs_up": row.thumbs_up or 0,
+            "thumbs_down": row.thumbs_down or 0,
+            "no_feedback": row.no_feedback or 0,
+            "accuracy_rate": round((row.thumbs_up or 0) / max((row.thumbs_up or 0) + (row.thumbs_down or 0), 1) * 100, 1)
+        }
+        for row in rows
+    ]
+
 async def get_stats(db: AsyncSession) -> dict:
     """Get overall statistics."""
     searches = await db.execute(select(Search))
     all_searches = searches.scalars().all()
-    
+
     accounts = await db.execute(select(Account))
     all_accounts = accounts.scalars().all()
-    
+
     return {
         "total_searches": len(all_searches),
         "completed_searches": len([s for s in all_searches if s.status == "completed"]),
@@ -105,3 +147,35 @@ async def get_stats(db: AsyncSession) -> dict:
         "deleted_accounts": len([a for a in all_accounts if a.status == "deleted"]),
         "pending_accounts": len([a for a in all_accounts if a.status == "pending"]),
     }
+
+
+# Platform check operations
+async def create_platform_check(
+    db: AsyncSession,
+    search_id: int,
+    platform_id: str,
+    platform_name: str,
+    profile_url: str,
+    found: bool
+) -> PlatformCheck:
+    """Create a platform check record."""
+    check = PlatformCheck(
+        search_id=search_id,
+        platform_id=platform_id,
+        platform_name=platform_name,
+        profile_url=profile_url,
+        found=found
+    )
+    db.add(check)
+    await db.commit()
+    return check
+
+
+async def get_platform_checks(db: AsyncSession, search_id: int, found: Optional[bool] = None) -> List[PlatformCheck]:
+    """Get platform checks for a search, optionally filtered by found status."""
+    query = select(PlatformCheck).where(PlatformCheck.search_id == search_id)
+    if found is not None:
+        query = query.where(PlatformCheck.found == found)
+    query = query.order_by(PlatformCheck.platform_name)
+    result = await db.execute(query)
+    return result.scalars().all()

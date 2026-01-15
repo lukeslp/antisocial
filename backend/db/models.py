@@ -46,6 +46,9 @@ class Account(Base):
     # Status tracking
     status = Column(String(20), default="pending")  # pending, confirmed, false_positive, deleted
 
+    # Accuracy feedback: 1 = correct (thumbs up), -1 = incorrect (thumbs down), 0 = no feedback
+    accuracy_feedback = Column(Integer, default=0)
+
     # Timestamps
     discovered_at = Column(DateTime, default=datetime.utcnow)
     verified_at = Column(DateTime, nullable=True)

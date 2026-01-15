@@ -27,6 +27,12 @@ interface DeletionGuide {
   steps: DeletionStep[];
 }
 
+// Platforms with verified deletion guides - only show button for these
+export const platformsWithDeletionGuides = new Set([
+  'github', 'twitter', 'instagram', 'facebook', 'reddit',
+  'linkedin', 'steam', 'tiktok', 'youtube', 'twitch'
+]);
+
 // Platform-specific deletion guides
 const deletionGuides: Record<string, DeletionGuide> = {
   github: {
@@ -171,20 +177,6 @@ const deletionGuides: Record<string, DeletionGuide> = {
   },
 };
 
-// Default guide for platforms without specific instructions
-const defaultGuide: Omit<DeletionGuide, "platformId" | "platformName"> = {
-  difficulty: "medium",
-  estimatedTime: "10-15 minutes",
-  deletionUrl: "",
-  steps: [
-    { step: 1, title: "Find Settings", description: "Look for a Settings, Account, or Profile menu." },
-    { step: 2, title: "Account Settings", description: "Navigate to Account or Privacy settings." },
-    { step: 3, title: "Delete Option", description: "Look for 'Delete Account', 'Close Account', or 'Deactivate'." },
-    { step: 4, title: "Confirm", description: "Follow the prompts to verify and confirm deletion." },
-  ],
-  notes: "If you can't find deletion options, try searching '[platform name] delete account' or contact their support.",
-};
-
 interface DeletionGuideDialogProps {
   platformId: string;
   platformName: string;
@@ -198,12 +190,14 @@ export function DeletionGuideDialog({
   profileUrl,
   trigger,
 }: DeletionGuideDialogProps) {
-  const guide = deletionGuides[platformId.toLowerCase()] || {
-    ...defaultGuide,
-    platformId,
-    platformName,
-    deletionUrl: profileUrl,
-  };
+  const platformKey = platformId.toLowerCase();
+
+  // Only show dialog for platforms with verified deletion guides
+  if (!platformsWithDeletionGuides.has(platformKey)) {
+    return null;
+  }
+
+  const guide = deletionGuides[platformKey];
 
   const difficultyColors = {
     easy: "text-green-500 bg-green-500/10 border-green-500/20",

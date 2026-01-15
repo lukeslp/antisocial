@@ -40,9 +40,10 @@ class AccountResponse(BaseModel):
     verification_method: str
     confidence_score: int
     status: str
+    accuracy_feedback: int = 0  # 1 = thumbs up, -1 = thumbs down, 0 = no feedback
     discovered_at: datetime
     verified_at: Optional[datetime] = None
-    
+
     class Config:
         from_attributes = True
 
@@ -55,6 +56,21 @@ class AccountUpdate(BaseModel):
 class BulkAccountUpdate(BaseModel):
     account_ids: List[int]
     status: str
+
+class AccountFeedback(BaseModel):
+    feedback: int  # 1 = thumbs up, -1 = thumbs down, 0 = clear
+
+class PlatformAccuracyStats(BaseModel):
+    platform_id: str
+    platform_name: str
+    total: int
+    thumbs_up: int
+    thumbs_down: int
+    no_feedback: int
+    accuracy_rate: float
+
+class PlatformAccuracyListResponse(BaseModel):
+    platforms: List[PlatformAccuracyStats]
 
 # Stats schemas
 class StatsResponse(BaseModel):
@@ -77,3 +93,21 @@ class PlatformResponse(BaseModel):
 
 class PlatformListResponse(BaseModel):
     platforms: List[PlatformResponse]
+
+
+# Platform check schemas (for showing checked platforms including negatives)
+class PlatformCheckResponse(BaseModel):
+    id: int
+    search_id: int
+    platform_id: str
+    platform_name: str
+    profile_url: str
+    found: bool
+    checked_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class PlatformCheckListResponse(BaseModel):
+    checks: List[PlatformCheckResponse]

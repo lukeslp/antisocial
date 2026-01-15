@@ -35,8 +35,19 @@ export interface Account {
   verification_method: string;
   confidence_score: number;
   status: 'pending' | 'confirmed' | 'false_positive' | 'deleted';
+  accuracy_feedback: number;  // 1 = thumbs up, -1 = thumbs down, 0 = no feedback
   discovered_at: string;
   verified_at?: string;
+}
+
+export interface PlatformAccuracy {
+  platform_id: string;
+  platform_name: string;
+  total: number;
+  thumbs_up: number;
+  thumbs_down: number;
+  no_feedback: number;
+  accuracy_rate: number;
 }
 
 export interface Stats {
@@ -46,6 +57,16 @@ export interface Stats {
   confirmed_accounts: number;
   deleted_accounts: number;
   pending_accounts: number;
+}
+
+export interface PlatformCheck {
+  id: number;
+  search_id: number;
+  platform_id: string;
+  platform_name: string;
+  profile_url: string;
+  found: boolean;
+  checked_at: string;
 }
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
@@ -100,6 +121,11 @@ export const api = {
     return fetchApi(`/api/searches/${id}/results`);
   },
 
+  getSearchChecks: async (id: number, found?: boolean): Promise<{ checks: PlatformCheck[] }> => {
+    const query = found !== undefined ? `?found=${found}` : '';
+    return fetchApi(`/api/searches/${id}/checks${query}`);
+  },
+
   // Accounts
   getAccounts: async (status?: string): Promise<{ accounts: Account[] }> => {
     const query = status && status !== 'all' ? `?status=${status}` : '';
@@ -123,8 +149,20 @@ export const api = {
     });
   },
 
+  submitFeedback: async (accountId: number, feedback: number): Promise<Account> => {
+    return fetchApi(`/api/accounts/${accountId}/feedback`, {
+      method: 'POST',
+      body: JSON.stringify({ feedback }),
+    });
+  },
+
   // Stats
   getStats: async (): Promise<Stats> => {
     return fetchApi('/api/stats');
+  },
+
+  // Accuracy stats
+  getAccuracyStats: async (): Promise<{ platforms: PlatformAccuracy[] }> => {
+    return fetchApi('/api/accuracy');
   },
 };
