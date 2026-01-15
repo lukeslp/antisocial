@@ -67,8 +67,12 @@ async def run_search_task(search_id: int, username: str, tiers: list, min_confid
             await crud.update_search_progress(db, search_id, checked, found)
         
         # Mark as completed
+        from backend.core.whatsmyname import get_wmn_loader
         platforms_total = len(registry.get_enabled_platforms(tiers))
-        await crud.update_search_progress(db, search_id, platforms_total, found)
+        wmn_loader = get_wmn_loader()
+        wmn_sites = wmn_loader.get_all_sites()
+        total_platforms = platforms_total + len(wmn_sites)
+        await crud.update_search_progress(db, search_id, total_platforms, found)
         await crud.complete_search(db, search_id)
 
 # API Routes
@@ -91,8 +95,12 @@ async def create_search(
     db: AsyncSession = Depends(get_db)
 ):
     """Create a new username search."""
+    from backend.core.whatsmyname import get_wmn_loader
     platforms = registry.get_enabled_platforms(search_data.tiers)
-    search = await crud.create_search(db, search_data.username, len(platforms))
+    wmn_loader = get_wmn_loader()
+    wmn_sites = wmn_loader.get_all_sites()
+    total_platforms = len(platforms) + len(wmn_sites)
+    search = await crud.create_search(db, search_data.username, total_platforms)
     
     # Start background search task
     background_tasks.add_task(
