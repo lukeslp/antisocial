@@ -23,8 +23,8 @@ class Settings(BaseSettings):
     screenshots_dir: Path = data_dir / "screenshots"
     
     # Search settings
-    max_concurrent_requests: int = 10
-    request_timeout: int = 30
+    max_concurrent_requests: int = 200  # High concurrency for fast parallel search
+    request_timeout: int = 5  # Aggressive timeout - most platforms respond within 1-2 seconds
     
     # Verification thresholds
     api_confidence: int = 95
