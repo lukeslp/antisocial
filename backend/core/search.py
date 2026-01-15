@@ -33,7 +33,7 @@ async def search_username(
     username: str,
     tiers: Optional[List[int]] = None,
     min_confidence: int = 0,
-    use_wmn: bool = True
+    use_wmn: bool = False  # Disabled by default for speed - only check curated platforms
 ) -> AsyncGenerator[VerificationResult, None]:
     """
     Search for a username across all enabled platforms.
@@ -95,12 +95,13 @@ async def search_username(
     tasks = [verify_with_semaphore(p) for p in platforms]
     tasks.extend([verify_wmn_with_semaphore(s) for s in wmn_sites])
     
-    # Yield results as they complete
+    # Yield ALL results as they complete (for accurate progress tracking)
     for coro in asyncio.as_completed(tasks):
         try:
             result = await coro
-            if result.found and result.confidence_score >= min_confidence:
-                yield result
+            # Yield all results, let caller decide what to do with them
+            # This ensures progress counter updates for every platform checked
+            yield result
         except Exception as e:
             # Log error but continue with other platforms
             print(f"Error verifying platform: {e}")

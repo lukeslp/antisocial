@@ -4,6 +4,20 @@ from backend.platforms.base import BaseVerifier, VerificationResult
 from backend.core.registry import Platform
 from backend.config.settings import settings
 
+# Shared HTTP client for all requests (reuse connection pool)
+_http_client: httpx.AsyncClient | None = None
+
+def get_http_client() -> httpx.AsyncClient:
+    """Get or create shared HTTP client."""
+    global _http_client
+    if _http_client is None:
+        _http_client = httpx.AsyncClient(
+            timeout=settings.request_timeout,
+            follow_redirects=True,
+            limits=httpx.Limits(max_connections=500, max_keepalive_connections=100)
+        )
+    return _http_client
+
 class HTTPVerifier(BaseVerifier):
     """Verifier using HTTP requests with content analysis (Tier 3)."""
     
@@ -32,63 +46,63 @@ class HTTPVerifier(BaseVerifier):
             variations = [username]
         
         try:
-            async with httpx.AsyncClient(timeout=settings.request_timeout, follow_redirects=True) as client:
-                headers = {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                }
+            client = get_http_client()
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            }
+            
+            for variant in variations:
+                url = self.get_profile_url(variant)
                 
-                for variant in variations:
-                    url = self.get_profile_url(variant)
+                try:
+                    response = await client.get(url, headers=headers)
                     
-                    try:
-                        response = await client.get(url, headers=headers)
-                        
-                        # Check status code
-                        if response.status_code == 404:
-                            continue
-                        
-                        if response.status_code != 200:
-                            continue
-                        
-                        # Analyze content
-                        content = response.text.lower()
-                        
-                        # Check platform-specific not-found indicators
-                        indicators = self.platform.not_found_indicators or self.NOT_FOUND_INDICATORS
-                        found_indicator = False
-                        for indicator in indicators:
-                            if indicator.lower() in content:
-                                found_indicator = True
-                                break
-                        
-                        if found_indicator:
-                            continue
-                        
-                        # Check for username in page (basic validation)
-                        confidence = settings.http_confidence
-                        if variant.lower() in content:
-                            confidence += 10
-                        
-                        # Extract basic info from meta tags
-                        display_name = self._extract_meta(content, "og:title") or self._extract_meta(content, "twitter:title")
-                        bio = self._extract_meta(content, "og:description") or self._extract_meta(content, "description")
-                        avatar = self._extract_meta(content, "og:image") or self._extract_meta(content, "twitter:image")
-                        
-                        return self._create_result(
-                            username=variant,
-                            found=True,
-                            confidence=min(confidence, 90),
-                            display_name=display_name,
-                            bio=bio[:200] if bio else None,
-                            avatar_url=avatar
-                        )
-                    except Exception:
-                        # Error with this variation, try next
+                    # Check status code
+                    if response.status_code == 404:
                         continue
-                
-                # No variations found
-                return self._create_result(username, False, 0)
+                    
+                    if response.status_code != 200:
+                        continue
+                    
+                    # Analyze content
+                    content = response.text.lower()
+                    
+                    # Check platform-specific not-found indicators
+                    indicators = self.platform.not_found_indicators or self.NOT_FOUND_INDICATORS
+                    found_indicator = False
+                    for indicator in indicators:
+                        if indicator.lower() in content:
+                            found_indicator = True
+                            break
+                    
+                    if found_indicator:
+                        continue
+                    
+                    # Check for username in page (basic validation)
+                    confidence = settings.http_confidence
+                    if variant.lower() in content:
+                        confidence += 10
+                    
+                    # Extract basic info from meta tags
+                    display_name = self._extract_meta(content, "og:title") or self._extract_meta(content, "twitter:title")
+                    bio = self._extract_meta(content, "og:description") or self._extract_meta(content, "description")
+                    avatar = self._extract_meta(content, "og:image") or self._extract_meta(content, "twitter:image")
+                    
+                    return self._create_result(
+                        username=variant,
+                        found=True,
+                        confidence=min(confidence, 90),
+                        display_name=display_name,
+                        bio=bio[:200] if bio else None,
+                        avatar_url=avatar
+                    )
+                except Exception:
+                    # Error with this variation, try next
+                    continue
+            
+            # No variations found
+            return self._create_result(username, False, 0)
                 
         except httpx.TimeoutException:
             return self._create_result(username, False, 0, error="Request timeout")
