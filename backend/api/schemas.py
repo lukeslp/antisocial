@@ -1,14 +1,35 @@
 """Pydantic schemas for API request/response models."""
+import re
 from datetime import datetime
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 # Search schemas
 class SearchCreate(BaseModel):
-    username: str
-    tiers: Optional[List[int]] = [1, 2, 3]
-    min_confidence: Optional[int] = 0
+    username: str = Field(..., min_length=1, max_length=255)
+    tiers: Optional[List[int]] = Field(default=[1, 2, 3])
+    min_confidence: Optional[int] = Field(default=0, ge=0, le=100)
     deep_search: Optional[bool] = False  # Enable WhatsMyName (765+ platforms, slower)
+
+    @field_validator('username')
+    @classmethod
+    def validate_username(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError('Username cannot be empty or whitespace')
+        # Allow alphanumeric, underscore, dash, dot (common across platforms)
+        if not re.match(r'^[a-zA-Z0-9._-]+$', v):
+            raise ValueError('Username contains invalid characters')
+        return v
+
+    @field_validator('tiers')
+    @classmethod
+    def validate_tiers(cls, v: List[int]) -> List[int]:
+        if not v:
+            raise ValueError('At least one tier must be selected')
+        if not all(t in [1, 2, 3] for t in v):
+            raise ValueError('Tiers must be 1, 2, or 3')
+        return v
 
 class SearchResponse(BaseModel):
     id: int
