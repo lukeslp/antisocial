@@ -39,9 +39,22 @@ async def search_username(
     Search for a username across all enabled platforms.
     
     Yields results as they come in for real-time updates.
+    Prioritizes high-volume platforms for faster initial results.
     """
     # Get platforms from our registry
     platforms = registry.get_enabled_platforms(tiers)
+    
+    # Prioritize high-volume platforms (check these first)
+    high_priority = ['github', 'reddit', 'twitter', 'instagram', 'facebook', 
+                     'linkedin', 'youtube', 'tiktok', 'medium', 'bluesky']
+    
+    def get_priority(platform):
+        name_lower = platform.name.lower()
+        if name_lower in high_priority:
+            return high_priority.index(name_lower)
+        return 999  # Low priority for others
+    
+    platforms = sorted(platforms, key=get_priority)
     
     # Get WhatsMyName sites if enabled
     wmn_sites = []
@@ -49,10 +62,23 @@ async def search_username(
         wmn_loader = get_wmn_loader()
         # Get all WMN sites, excluding ones we already have in our registry
         registry_names = {p.name.lower() for p in platforms}
+        all_wmn_sites = wmn_loader.get_all_sites()
+        
+        # Prioritize popular WMN sites
+        wmn_priority = ['steam', 'gitlab', 'patreon', 'soundcloud', 'twitch',
+                        'pinterest', 'tumblr', 'vimeo', 'behance', 'dribbble']
+        
+        def get_wmn_priority(site):
+            name_lower = site.name.lower()
+            if name_lower in wmn_priority:
+                return wmn_priority.index(name_lower)
+            return 999
+        
         wmn_sites = [
-            site for site in wmn_loader.get_all_sites()
+            site for site in all_wmn_sites
             if site.name.lower() not in registry_names
         ]
+        wmn_sites = sorted(wmn_sites, key=get_wmn_priority)
     
     # Create semaphore to limit concurrent requests
     semaphore = asyncio.Semaphore(settings.max_concurrent_requests)
