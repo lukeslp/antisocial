@@ -22,8 +22,14 @@ class HTTPVerifier(BaseVerifier):
     ]
     
     async def verify(self, username: str) -> VerificationResult:
-        """Verify username via HTTP request and content analysis."""
-        url = self.get_profile_url(username)
+        """Verify username via HTTP request and content analysis with username variations."""
+        from backend.core.username_variations import generate_variations, should_try_variations
+        
+        # Generate username variations if applicable
+        if should_try_variations(self.platform.id):
+            variations = generate_variations(username, self.platform.id)
+        else:
+            variations = [username]
         
         try:
             async with httpx.AsyncClient(timeout=settings.request_timeout, follow_redirects=True) as client:
@@ -32,42 +38,57 @@ class HTTPVerifier(BaseVerifier):
                     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
                 }
                 
-                response = await client.get(url, headers=headers)
+                for variant in variations:
+                    url = self.get_profile_url(variant)
+                    
+                    try:
+                        response = await client.get(url, headers=headers)
+                        
+                        # Check status code
+                        if response.status_code == 404:
+                            continue
+                        
+                        if response.status_code != 200:
+                            continue
+                        
+                        # Analyze content
+                        content = response.text.lower()
+                        
+                        # Check platform-specific not-found indicators
+                        indicators = self.platform.not_found_indicators or self.NOT_FOUND_INDICATORS
+                        found_indicator = False
+                        for indicator in indicators:
+                            if indicator.lower() in content:
+                                found_indicator = True
+                                break
+                        
+                        if found_indicator:
+                            continue
+                        
+                        # Check for username in page (basic validation)
+                        confidence = settings.http_confidence
+                        if variant.lower() in content:
+                            confidence += 10
+                        
+                        # Extract basic info from meta tags
+                        display_name = self._extract_meta(content, "og:title") or self._extract_meta(content, "twitter:title")
+                        bio = self._extract_meta(content, "og:description") or self._extract_meta(content, "description")
+                        avatar = self._extract_meta(content, "og:image") or self._extract_meta(content, "twitter:image")
+                        
+                        return self._create_result(
+                            username=variant,
+                            found=True,
+                            confidence=min(confidence, 90),
+                            display_name=display_name,
+                            bio=bio[:200] if bio else None,
+                            avatar_url=avatar
+                        )
+                    except Exception:
+                        # Error with this variation, try next
+                        continue
                 
-                # Check status code
-                if response.status_code == 404:
-                    return self._create_result(username, False, 0)
-                
-                if response.status_code != 200:
-                    return self._create_result(username, False, 0, error=f"HTTP {response.status_code}")
-                
-                # Analyze content
-                content = response.text.lower()
-                
-                # Check platform-specific not-found indicators
-                indicators = self.platform.not_found_indicators or self.NOT_FOUND_INDICATORS
-                for indicator in indicators:
-                    if indicator.lower() in content:
-                        return self._create_result(username, False, 0)
-                
-                # Check for username in page (basic validation)
-                confidence = settings.http_confidence
-                if username.lower() in content:
-                    confidence += 10
-                
-                # Extract basic info from meta tags
-                display_name = self._extract_meta(content, "og:title") or self._extract_meta(content, "twitter:title")
-                bio = self._extract_meta(content, "og:description") or self._extract_meta(content, "description")
-                avatar = self._extract_meta(content, "og:image") or self._extract_meta(content, "twitter:image")
-                
-                return self._create_result(
-                    username=username,
-                    found=True,
-                    confidence=min(confidence, 90),
-                    display_name=display_name,
-                    bio=bio[:200] if bio else None,
-                    avatar_url=avatar
-                )
+                # No variations found
+                return self._create_result(username, False, 0)
                 
         except httpx.TimeoutException:
             return self._create_result(username, False, 0, error="Request timeout")

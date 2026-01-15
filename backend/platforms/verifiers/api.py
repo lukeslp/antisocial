@@ -36,63 +36,94 @@ class APIVerifier(BaseVerifier):
             return self._create_result(username, False, 0, error=str(e))
     
     async def _verify_github(self, client: httpx.AsyncClient, url: str, username: str) -> VerificationResult:
-        """Verify GitHub user via API."""
-        response = await client.get(url, headers={"Accept": "application/vnd.github.v3+json"})
+        """Verify GitHub user via API with username variations."""
+        from backend.core.username_variations import generate_variations
         
-        if response.status_code == 200:
-            data = response.json()
-            return self._create_result(
-                username=username,
-                found=True,
-                confidence=100,
-                display_name=data.get("name"),
-                bio=data.get("bio"),
-                avatar_url=data.get("avatar_url")
-            )
-        elif response.status_code == 404:
-            return self._create_result(username, False, 0)
-        else:
-            return self._create_result(username, False, 0, error=f"HTTP {response.status_code}")
+        variations = generate_variations(username, "github")
+        
+        for variant in variations:
+            variant_url = url.replace(username, variant)
+            try:
+                response = await client.get(variant_url, headers={"Accept": "application/vnd.github.v3+json"})
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    return self._create_result(
+                        username=variant,
+                        found=True,
+                        confidence=100,
+                        display_name=data.get("name"),
+                        bio=data.get("bio"),
+                        avatar_url=data.get("avatar_url")
+                    )
+                elif response.status_code == 404:
+                    continue
+            except Exception:
+                continue
+        
+        return self._create_result(username, False, 0)
     
     async def _verify_reddit(self, client: httpx.AsyncClient, url: str, username: str) -> VerificationResult:
-        """Verify Reddit user via API."""
-        headers = {"User-Agent": "AccountDiscovery/1.0"}
-        response = await client.get(url, headers=headers)
+        """Verify Reddit user via API with username variations."""
+        from backend.core.username_variations import generate_variations
         
-        if response.status_code == 200:
-            data = response.json()
-            user_data = data.get("data", {})
-            return self._create_result(
-                username=username,
-                found=True,
-                confidence=100,
-                display_name=user_data.get("subreddit", {}).get("title"),
-                bio=user_data.get("subreddit", {}).get("public_description"),
-                avatar_url=user_data.get("icon_img", "").split("?")[0] if user_data.get("icon_img") else None
-            )
-        elif response.status_code == 404:
-            return self._create_result(username, False, 0)
-        else:
-            return self._create_result(username, False, 0, error=f"HTTP {response.status_code}")
+        variations = generate_variations(username, "reddit")
+        headers = {"User-Agent": "AccountDiscovery/1.0"}
+        
+        for variant in variations:
+            variant_url = url.replace(username, variant)
+            try:
+                response = await client.get(variant_url, headers=headers)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    user_data = data.get("data", {})
+                    return self._create_result(
+                        username=variant,
+                        found=True,
+                        confidence=100,
+                        display_name=user_data.get("subreddit", {}).get("title"),
+                        bio=user_data.get("subreddit", {}).get("public_description"),
+                        avatar_url=user_data.get("icon_img", "").split("?")[0] if user_data.get("icon_img") else None
+                    )
+                elif response.status_code == 404:
+                    continue
+            except Exception:
+                continue
+        
+        return self._create_result(username, False, 0)
     
     async def _verify_bluesky(self, client: httpx.AsyncClient, url: str, username: str) -> VerificationResult:
-        """Verify Bluesky user via API."""
-        response = await client.get(url)
+        """Verify Bluesky user via API with domain handle support."""
+        from backend.core.username_variations import generate_variations
         
-        if response.status_code == 200:
-            data = response.json()
-            return self._create_result(
-                username=username,
-                found=True,
-                confidence=100,
-                display_name=data.get("displayName"),
-                bio=data.get("description"),
-                avatar_url=data.get("avatar")
-            )
-        elif response.status_code == 400:
-            return self._create_result(username, False, 0)
-        else:
-            return self._create_result(username, False, 0, error=f"HTTP {response.status_code}")
+        # Try username variations (including domain handles like username.bsky.social)
+        variations = generate_variations(username, "bluesky")
+        
+        for variant in variations:
+            variant_url = url.replace(username, variant)
+            try:
+                response = await client.get(variant_url)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    return self._create_result(
+                        username=variant,
+                        found=True,
+                        confidence=100,
+                        display_name=data.get("displayName"),
+                        bio=data.get("description"),
+                        avatar_url=data.get("avatar")
+                    )
+                elif response.status_code == 400:
+                    # Profile not found, try next variation
+                    continue
+            except Exception:
+                # Error with this variation, try next
+                continue
+        
+        # No variations found
+        return self._create_result(username, False, 0)
     
     async def _verify_medium(self, client: httpx.AsyncClient, url: str, username: str) -> VerificationResult:
         """Verify Medium user."""
