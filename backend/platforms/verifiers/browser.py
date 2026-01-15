@@ -101,7 +101,7 @@ class BrowserVerifier(BaseVerifier):
                 title = await page.title()
                 if "(" in title and ")" in title:
                     display_name = title.split("(")[0].strip()
-            except:
+            except Exception:
                 pass
             return self._create_result(username, True, settings.browser_confidence, display_name=display_name)
 
@@ -131,7 +131,7 @@ class BrowserVerifier(BaseVerifier):
                     display_name = title.split("(")[0].strip()
                 elif " • " in title:
                     display_name = title.split(" • ")[0].strip()
-            except:
+            except Exception:
                 pass
             return self._create_result(username, True, settings.browser_confidence, display_name=display_name)
 
@@ -214,7 +214,7 @@ class BrowserVerifier(BaseVerifier):
                     display_name = title.split(" | ")[0].strip()
                 elif " - " in title:
                     display_name = title.split(" - ")[0].strip()
-            except:
+            except Exception:
                 pass
             return self._create_result(username, True, settings.browser_confidence, display_name=display_name)
 
@@ -233,7 +233,7 @@ class BrowserVerifier(BaseVerifier):
                 title = await page.title()
                 if " - YouTube" in title:
                     display_name = title.replace(" - YouTube", "").strip()
-            except:
+            except Exception:
                 pass
             return self._create_result(username, True, settings.browser_confidence, display_name=display_name)
 
@@ -252,7 +252,7 @@ class BrowserVerifier(BaseVerifier):
                 title = await page.title()
                 if " - Twitch" in title:
                     display_name = title.replace(" - Twitch", "").strip()
-            except:
+            except Exception:
                 pass
             return self._create_result(username, True, settings.browser_confidence, display_name=display_name)
 
@@ -271,7 +271,7 @@ class BrowserVerifier(BaseVerifier):
                 title = await page.title()
                 if " (" in title:
                     display_name = title.split(" (")[0].strip()
-            except:
+            except Exception:
                 pass
             return self._create_result(username, True, settings.browser_confidence, display_name=display_name)
 

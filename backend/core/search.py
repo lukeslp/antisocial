@@ -1,7 +1,10 @@
 """Search orchestration for username verification across platforms."""
 import asyncio
+import logging
 from typing import List, Optional, AsyncGenerator
 from backend.core.registry import registry, Platform
+
+logger = logging.getLogger(__name__)
 from backend.core.whatsmyname import get_wmn_loader
 from backend.platforms.base import VerificationResult
 from backend.platforms.verifiers.api import APIVerifier
@@ -104,7 +107,7 @@ async def search_username(
             yield result
         except Exception as e:
             # Log error but continue with other platforms
-            print(f"Error verifying platform: {e}")
+            logger.warning(f"Error verifying platform: {e}")
             continue
 
 async def search_username_batch(
