@@ -111,11 +111,11 @@ export default function Search() {
             <div className="p-6 rounded-lg bg-card/50 border border-border/50 text-left space-y-3">
               <h3 className="font-semibold text-lg">How it works</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                We search 24 major platforms using official APIs, browser automation, and intelligent content analysis. 
-                Each result includes a direct link to the account and step-by-step deletion instructions.
+                Searches 24 major platforms using official APIs, browser automation, and content analysis.
+                Each result links directly to the account with deletion instructions.
               </p>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Mark results as correct or incorrect to help us improve accuracy and filter your final report.
+                Mark results as correct or incorrect to filter your export and improve future accuracy.
               </p>
             </div>
           </div>

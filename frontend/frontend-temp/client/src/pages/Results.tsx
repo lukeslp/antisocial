@@ -443,8 +443,7 @@ export default function Results() {
             {showNegativeResults && (
               <div className="mt-3 p-4 rounded-lg bg-card/20 border border-border/30">
                 <p className="text-xs text-muted-foreground mb-3">
-                  These platforms were searched but no matching account was found.
-                  Click to double-check manually if you think we may have missed something.
+                  No account found on these platforms. Click any to double-check manually.
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                   {negativeChecks.map((check) => (

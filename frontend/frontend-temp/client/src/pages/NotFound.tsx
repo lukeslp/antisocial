@@ -28,9 +28,7 @@ export default function NotFound() {
           </h2>
 
           <p className="text-slate-600 mb-8 leading-relaxed">
-            Sorry, the page you are looking for doesn't exist.
-            <br />
-            It may have been moved or deleted.
+            This page doesn't exist. It may have been moved or deleted.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
