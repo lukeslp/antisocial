@@ -11,12 +11,12 @@ export default function Navigation() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
               <FileText className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-lg">Account Discovery</span>
+            <span className="font-bold text-lg">Social Scout</span>
           </Link>
 
           {/* Tagline */}
           <div className="text-sm text-muted-foreground hidden md:block">
-            Find and delete old accounts across 24 major platforms
+            Track down those accounts you forgot you made
           </div>
         </div>
       </div>

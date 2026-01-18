@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
     
     # Application
-    app_name: str = "Account Discovery Tool"
+    app_name: str = "Social Scout"
     debug: bool = False
     
     # Server

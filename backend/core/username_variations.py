@@ -15,11 +15,15 @@ def generate_variations(username: str, platform_id: str) -> List[str]:
     variations: Set[str] = {username}  # Always include original
     
     # Bluesky: supports domain handles like username.bsky.social or custom domains
+    # Note: Bluesky custom domain handles are case-sensitive (lowercase required)
     if platform_id == "bluesky":
+        username_lower = username.lower()
         variations.add(f"{username}.bsky.social")
-        # Try common domain extensions
+        variations.add(f"{username_lower}.bsky.social")
+        # Try common domain extensions (both original case and lowercase)
         for ext in [".com", ".net", ".org", ".io", ".dev"]:
             variations.add(f"{username}{ext}")
+            variations.add(f"{username_lower}{ext}")
     
     # GitHub, GitLab: dots, hyphens, underscores
     elif platform_id in ["github", "gitlab"]:

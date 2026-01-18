@@ -23,7 +23,7 @@ import {
   ThumbsUp,
   ThumbsDown,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { api, Search, Account, PlatformCheck } from "@/lib/api";
 import { useRoute } from "wouter";
 import { PlatformIcon, PlatformBadge } from "@/components/PlatformIcon";
@@ -32,25 +32,34 @@ import { DeletionGuideDialog } from "@/components/DeletionGuideDialog";
 export default function Results() {
   const [, params] = useRoute("/results/:id");
   const searchId = params?.id ? parseInt(params.id) : null;
-  
+
   const [search, setSearch] = useState<Search | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [negativeChecks, setNegativeChecks] = useState<PlatformCheck[]>([]);
   const [showNegativeResults, setShowNegativeResults] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Use ref to avoid stale closure in polling interval
+  const searchStatusRef = useRef<string | null>(null);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    searchStatusRef.current = search?.status || null;
+  }, [search?.status]);
+
   useEffect(() => {
     if (searchId) {
       loadData();
-      // Poll for updates if search is running
+      // Poll for updates while search is running or pending
       const interval = setInterval(() => {
-        if (search?.status === 'running') {
+        const status = searchStatusRef.current;
+        if (status === 'running' || status === 'pending' || status === null) {
           loadData();
         }
-      }, 1000); // Poll every 1 second for real-time updates
+      }, 2000); // Poll every 2 seconds to balance freshness with server load
       return () => clearInterval(interval);
     }
-  }, [searchId, search?.status]);
+  }, [searchId]);
 
   const loadData = async () => {
     if (!searchId) return;
@@ -84,7 +93,7 @@ export default function Results() {
           acc.id === accountId ? { ...acc, status: status as any } : acc
         )
       );
-      toast.success(isCorrect ? "Marked as yours" : "Marked as incorrect");
+      toast.success(isCorrect ? "Confirmed as yours" : "Hidden from results");
     } catch (error: any) {
       toast.error(error.message || "Failed to update account");
     }
@@ -118,6 +127,7 @@ export default function Results() {
         return;
       }
 
+      let url: string;
       if (format === 'csv') {
         const headers = ['Platform', 'Username', 'Display Name', 'Profile URL', 'Confidence'];
         const rows = confirmedAccounts.map(acc => [
@@ -127,10 +137,10 @@ export default function Results() {
           acc.profile_url,
           `${acc.confidence_score}%`,
         ]);
-        
+
         const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
+        url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = `accounts-${search?.username}.csv`;
@@ -138,12 +148,15 @@ export default function Results() {
       } else {
         const json = JSON.stringify(confirmedAccounts, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
+        url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = `accounts-${search?.username}.json`;
         a.click();
       }
+
+      // Clean up blob URL to prevent memory leak
+      URL.revokeObjectURL(url);
       
       toast.success(`Exported ${confirmedAccounts.length} accounts`);
     } catch (error: any) {
@@ -156,7 +169,7 @@ export default function Results() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
-          <p className="text-muted-foreground">Loading results...</p>
+          <p className="text-muted-foreground">Fetching your results...</p>
         </div>
       </div>
     );
@@ -167,7 +180,7 @@ export default function Results() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <AlertTriangle className="w-12 h-12 mx-auto text-yellow-500" />
-          <p className="text-muted-foreground">Search not found</p>
+          <p className="text-muted-foreground">Couldn't find that search</p>
         </div>
       </div>
     );
@@ -182,21 +195,25 @@ export default function Results() {
   const confirmedCount = accounts.filter(a => a.status === 'confirmed').length;
 
   const getVerificationMethod = (score: number) => {
-    if (score >= 90) return "Official API verification";
-    if (score >= 80) return "Browser automation check";
-    return "Enhanced HTTP analysis";
+    if (score >= 90) return "Verified through official API";
+    if (score >= 80) return "Checked with browser automation";
+    return "Found via HTTP request";
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container py-8 max-w-4xl">
+      <main className="container py-8 max-w-4xl" role="main" aria-label="Search results">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-1">@{search.username}</h1>
             <p className="text-muted-foreground">
-              {visibleAccounts.length} account{visibleAccounts.length !== 1 ? 's' : ''} found
-              {confirmedCount > 0 && ` • ${confirmedCount} confirmed`}
+              {visibleAccounts.length === 0
+                ? 'No accounts found yet'
+                : visibleAccounts.length === 1
+                  ? '1 account found'
+                  : `${visibleAccounts.length} accounts found`}
+              {confirmedCount > 0 && ` · ${confirmedCount} yours`}
             </p>
           </div>
           
@@ -206,16 +223,18 @@ export default function Results() {
                 variant="outline"
                 size="sm"
                 onClick={() => handleExport('csv')}
+                aria-label="Export confirmed accounts as CSV file"
               >
-                <Download className="w-4 h-4 mr-2" />
+                <Download className="w-4 h-4 mr-2" aria-hidden="true" />
                 Export CSV
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handleExport('json')}
+                aria-label="Export confirmed accounts as JSON file"
               >
-                <Download className="w-4 h-4 mr-2" />
+                <Download className="w-4 h-4 mr-2" aria-hidden="true" />
                 Export JSON
               </Button>
             </div>
@@ -228,12 +247,29 @@ export default function Results() {
             <CardContent className="p-4">
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Searching platforms...</span>
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" aria-hidden="true" />
+                    <span className="text-muted-foreground">
+                      Checking sites...
+                      {search.accounts_found > 0 && ` (found ${search.accounts_found} so far)`}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 text-xs text-primary/70">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                      </span>
+                      Live
+                    </span>
+                  </div>
                   <span className="font-mono font-medium">
                     {search.platforms_checked} / {search.platforms_total || 0}
                   </span>
                 </div>
-                <Progress value={progress} className="h-2" />
+                <Progress
+                  value={progress}
+                  className="h-2"
+                  aria-label={`Search progress: ${search.platforms_checked} of ${search.platforms_total || 0} platforms checked`}
+                />
               </div>
             </CardContent>
           </Card>
@@ -247,8 +283,8 @@ export default function Results() {
                 <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
                 <p className="text-muted-foreground">
                   {search.status === 'running'
-                    ? 'No accounts found yet. Still searching...'
-                    : 'No accounts found for this username.'}
+                    ? 'Nothing yet — still looking...'
+                    : 'No accounts found with this username'}
                 </p>
               </CardContent>
             </Card>
@@ -348,7 +384,7 @@ export default function Results() {
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>This result is accurate</p>
+                              <p>Good find</p>
                             </TooltipContent>
                           </Tooltip>
                           <Tooltip>
@@ -367,7 +403,7 @@ export default function Results() {
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>This result is inaccurate</p>
+                              <p>Wrong result</p>
                             </TooltipContent>
                           </Tooltip>
                         </div>
@@ -381,7 +417,7 @@ export default function Results() {
                               onClick={() => handleMarkAccount(account.id, true)}
                             >
                               <CheckCircle2 className="w-4 h-4 mr-2" />
-                              This is mine
+                              That's me
                             </Button>
                             <Button
                               size="sm"
@@ -390,7 +426,7 @@ export default function Results() {
                               onClick={() => handleMarkAccount(account.id, false)}
                             >
                               <XCircle className="w-4 h-4 mr-2" />
-                              Not mine
+                              Not me
                             </Button>
                           </>
                         )}
@@ -414,7 +450,7 @@ export default function Results() {
         {search.status === 'completed' && visibleAccounts.length > 0 && (
           <div className="mt-6 p-4 rounded-lg bg-card/50 border border-border/50 text-center">
             <p className="text-sm text-muted-foreground">
-              Search complete. Mark accounts as yours to include them in your export report.
+              All done! Mark which accounts are yours, then export the list.
             </p>
           </div>
         )}
@@ -426,24 +462,26 @@ export default function Results() {
               variant="ghost"
               className="w-full flex items-center justify-between p-4 rounded-lg bg-card/30 border border-border/50 hover:bg-card/50"
               onClick={() => setShowNegativeResults(!showNegativeResults)}
+              aria-expanded={showNegativeResults}
+              aria-controls="negative-results"
             >
               <div className="flex items-center gap-2">
-                <SearchIcon className="w-4 h-4 text-muted-foreground" />
+                <SearchIcon className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
                 <span className="text-sm text-muted-foreground">
-                  {negativeChecks.length} platforms checked - no account found
+                  {negativeChecks.length} sites with nothing
                 </span>
               </div>
               {showNegativeResults ? (
-                <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                <ChevronUp className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
               ) : (
-                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                <ChevronDown className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
               )}
             </Button>
 
             {showNegativeResults && (
-              <div className="mt-3 p-4 rounded-lg bg-card/20 border border-border/30">
+              <div id="negative-results" className="mt-3 p-4 rounded-lg bg-card/20 border border-border/30">
                 <p className="text-xs text-muted-foreground mb-3">
-                  No account found on these platforms. Click any to double-check manually.
+                  Didn't find anything on these. Click to double-check yourself if you want.
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                   {negativeChecks.map((check) => (
@@ -463,7 +501,7 @@ export default function Results() {
             )}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
