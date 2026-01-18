@@ -78,7 +78,7 @@ export default function Dashboard() {
           <div className="max-w-4xl">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm text-primary mb-6">
               <Activity className="w-4 h-4" />
-              <span>Account Discovery Dashboard</span>
+              <span>Social Scout Dashboard</span>
             </div>
             
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
@@ -179,7 +179,7 @@ export default function Dashboard() {
             <CardHeader>
               <CardTitle>Recent Searches</CardTitle>
               <CardDescription>
-                Your latest account discovery searches
+                Your recent searches
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">

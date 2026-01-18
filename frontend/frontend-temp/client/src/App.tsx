@@ -6,23 +6,19 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Search from "./pages/Search";
 import Results from "./pages/Results";
-import Navigation from "./components/Navigation";
 
 // Base path for deployment under /social-scout/
 const BASE_PATH = "/social-scout";
 
 function Routes() {
   return (
-    <>
-      <Navigation />
-      <Switch>
+    <Switch>
         <Route path={"/"} component={Search} />
         <Route path={"/results/:id"} component={Results} />
         <Route path={"/404"} component={NotFound} />
         {/* Final fallback route */}
         <Route component={NotFound} />
       </Switch>
-    </>
   );
 }
 

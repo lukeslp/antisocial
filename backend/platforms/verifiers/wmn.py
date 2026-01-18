@@ -113,11 +113,10 @@ class WMNVerifier(BaseVerifier):
     
     def _create_result(self, username: str, found: bool, confidence: int, error: str = None) -> VerificationResult:
         """Create verification result."""
-        profile_url = None
-        if found:
-            profile_url = self.wmn_site.uri_pretty or self.wmn_site.uri_check
-            profile_url = profile_url.replace('{account}', username)
-        
+        # Always provide profile_url (required by database)
+        profile_url = self.wmn_site.uri_pretty or self.wmn_site.uri_check
+        profile_url = profile_url.replace('{account}', username)
+
         return VerificationResult(
             platform_id=self.platform.id,
             platform_name=self.platform.name,
