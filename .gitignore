@@ -52,3 +52,18 @@ htmlcov/
 # Temporary files
 *.tmp
 *.temp
+
+# AI artifacts (humanize skill - keep out of public repos)
+CRITIC.md
+ONBOARD.md
+PROGRESS_STATUS.md
+IMPLEMENTATION_STATUS.md
+SESSION_LOG.md
+WORK_LOG.md
+AGENT_REPORT.md
+CONSOLIDATION_HISTORY.md
+EXPLORATION_SUMMARY.md
+*_IMPLEMENTATION_STATUS.md
+*_PROGRESS.md
+SUGGESTIONS.md
+WORKING_SCRIPTS_TEST_REPORT.md
