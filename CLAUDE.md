@@ -10,9 +10,9 @@ source venv/bin/activate
 python run.py                    # Dev server (port 8000)
 
 # Production (via service manager)
-sm start social-scout            # Port 5010
-sm restart social-scout
-sm logs social-scout
+sm start antisocial              # Port 5010
+sm restart antisocial
+sm logs antisocial
 
 # Tests
 pytest
@@ -22,8 +22,8 @@ pytest tests/test_file.py -v
 playwright install chromium
 ```
 
-Production URL: https://dr.eamer.dev/social-scout/
-GitHub repo: `lukeslp/account-discovery` (name mismatch -- `social-scout` is the local dir name)
+Production URL: https://dr.eamer.dev/antisocial/
+GitHub repo: `lukeslp/antisocial` (local dir is still `social-scout` - rename when convenient)
 
 ## Architecture
 

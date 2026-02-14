@@ -1,4 +1,4 @@
-"""FastAPI application for Account Discovery Tool."""
+"""FastAPI application for Antisocial."""
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks
@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.app_name,
-    description="Find and manage old accounts across 30+ social media platforms",
+    description="Find your forgotten digital footprints across 30+ platforms",
     version="1.0.0",
     lifespan=lifespan
 )
