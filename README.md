@@ -1,4 +1,4 @@
-# Account Discovery
+# Antisocial
 
 Ever think about an old account and get embarrassed? Find your forgotten digital footprints across 30+ platforms before someone else does.
 
@@ -6,7 +6,7 @@ Ever think about an old account and get embarrassed? Find your forgotten digital
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![Live](https://img.shields.io/badge/live-dr.eamer.dev%2Fsocial--scout-cyan.svg)
 
-![Account Discovery Tool](frontend/og-image.jpg)
+![Antisocial](frontend/og-image.jpg)
 
 ## The Problem
 
@@ -41,8 +41,8 @@ Steam, GitLab, Patreon, SoundCloud, Dribbble - makes HTTP requests but actually 
 
 ```bash
 # Clone the repository
-git clone https://github.com/lukeslp/account-discovery.git
-cd account-discovery
+git clone https://github.com/lukeslp/antisocial.git
+cd antisocial
 
 # Create virtual environment (you know the drill)
 python -m venv venv
@@ -154,7 +154,7 @@ For complex platforms (because nothing is ever simple), add a custom handler in 
 - **Backend**: FastAPI (for speed), SQLAlchemy (for sanity), Playwright (for overkill), httpx (for async)
 - **Database**: SQLite with async support (because why not)
 - **Frontend**: React, Vite, Tailwind CSS, shadcn/ui
-- **Deployment**: Live at [dr.eamer.dev/social-scout](https://dr.eamer.dev/social-scout/)
+- **Deployment**: Live at [dr.eamer.dev/antisocial](https://dr.eamer.dev/antisocial/)
 
 ## Why Three Tiers?
 
