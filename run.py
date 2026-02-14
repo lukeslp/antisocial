@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Entry point for the Account Discovery Tool backend."""
+"""Entry point for Antisocial backend."""
 import uvicorn
 from backend.config.settings import settings
 
