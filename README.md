@@ -4,7 +4,7 @@ Ever think about an old account and get embarrassed? Find your forgotten digital
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
-![Live](https://img.shields.io/badge/live-dr.eamer.dev%2Fsocial--scout-cyan.svg)
+![Live](https://img.shields.io/badge/live-dr.eamer.dev%2Fantisocial-cyan.svg)
 
 ![Antisocial](frontend/og-image.jpg)
 
