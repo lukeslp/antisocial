@@ -1,5 +1,5 @@
 // API client for Account Discovery Tool backend
-const API_BASE = import.meta.env.VITE_API_URL || '/social-scout';
+const API_BASE = import.meta.env.VITE_API_URL || '/antisocial';
 
 export interface Platform {
   id: string;
