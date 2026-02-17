@@ -67,3 +67,8 @@ EXPLORATION_SUMMARY.md
 *_PROGRESS.md
 SUGGESTIONS.md
 WORKING_SCRIPTS_TEST_REPORT.md
+
+# geepers_quickwin baseline
+*.pyc
+.mypy_cache/
+.ruff_cache/
