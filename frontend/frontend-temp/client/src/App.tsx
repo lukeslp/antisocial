@@ -7,8 +7,8 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Search from "./pages/Search";
 import Results from "./pages/Results";
 
-// Base path for deployment under /social-scout/
-const BASE_PATH = "/social-scout";
+// Base path for deployment under /antisocial/
+const BASE_PATH = "/antisocial";
 
 function Routes() {
   return (
