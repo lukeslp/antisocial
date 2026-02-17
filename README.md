@@ -8,19 +8,17 @@ Find forgotten accounts across 30+ social media platforms using three-tier verif
 
 ## Overview
 
-Most username discovery tools have 30-40% false positive rates because they only check HTTP status codes. This tool achieves under 5% false positives through intelligent three-tier verification.
-
-Tier 1 uses official platform APIs (95%+ confidence). Tier 2 uses browser automation to verify page content (85% confidence). Tier 3 uses HTTP requests with content analysis (70-90% confidence).
+Most username discovery tools have 30-40% false positive rates because they only check HTTP status codes. This tool gets under 5% false positives through three-tier verification: official APIs first, then browser automation, then HTTP content analysis.
 
 ## Features
 
-- Three-tier verification system (API, browser automation, HTTP analysis)
-- 30+ supported platforms (GitHub, Reddit, Bluesky, Twitter, Instagram, TikTok, LinkedIn, YouTube, etc.)
-- Username variation detection (tries platform-specific patterns automatically)
-- Real-time streaming results with platform prioritization
-- Account management (track, confirm, mark false positives)
-- Optional deep search mode (500+ additional platforms via WhatsMyName)
-- Parallel search with 200 concurrent requests
+- Verifies accounts via official APIs (95%+ confidence), browser automation (85%), and HTTP content analysis (70-90%)
+- Searches 30+ platforms including GitHub, Reddit, Bluesky, Twitter, Instagram, TikTok, LinkedIn, YouTube
+- Tries platform-specific username patterns automatically (e.g. `luke.steuber` → `luke-steuber` for GitHub)
+- Streams results in real time as platforms respond, prioritizing high-traffic sites first
+- Confirms, flags, or removes found accounts; export filtered results as CSV/JSON
+- Deep search mode adds 500+ platforms via WhatsMyName database
+- Runs 200 concurrent requests with semaphore-based rate protection
 
 ## Installation
 
@@ -37,7 +35,7 @@ playwright install chromium
 python run.py
 ```
 
-Server runs at http://localhost:8000
+Server runs at http://localhost:8000. API docs at http://localhost:8000/docs.
 
 ## Usage
 
@@ -58,9 +56,11 @@ Get results:
 curl http://localhost:8000/api/searches/1/results
 ```
 
-List platforms:
+Deep search (500+ platforms via WhatsMyName):
 ```bash
-curl http://localhost:8000/api/platforms
+curl -X POST http://localhost:8000/api/searches \
+  -H "Content-Type: application/json" \
+  -d '{"username": "example", "tiers": [1, 2, 3], "deep_search": true}'
 ```
 
 ## API Endpoints
@@ -68,15 +68,18 @@ curl http://localhost:8000/api/platforms
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/health` | GET | Health check |
-| `/api/stats` | GET | Statistics |
-| `/api/searches` | POST | Create search |
-| `/api/searches` | GET | List searches |
-| `/api/searches/{id}` | GET | Search details |
+| `/api/stats` | GET | Total searches, accounts, platforms |
+| `/api/searches` | POST | Start a new search |
+| `/api/searches` | GET | List all searches |
+| `/api/searches/{id}` | GET | Search details and progress |
 | `/api/searches/{id}/results` | GET | Found accounts |
+| `/api/searches/{id}/checks` | GET | All platforms checked (add `?found=true` to filter) |
 | `/api/platforms` | GET | Supported platforms |
-| `/api/accounts` | GET | List accounts |
-| `/api/accounts/{id}` | PATCH | Update account |
-| `/api/accounts/bulk-update` | POST | Bulk update |
+| `/api/accounts` | GET | All accounts (filter by `?status=confirmed\|false_positive`) |
+| `/api/accounts/{id}` | PATCH | Update account status |
+| `/api/accounts/bulk-update` | POST | Bulk status update |
+| `/api/accounts/{id}/feedback` | POST | Accuracy feedback (1=correct, -1=incorrect, 0=clear) |
+| `/api/accuracy` | GET | Per-platform accuracy statistics |
 
 ## Configuration
 
@@ -87,9 +90,9 @@ PORT=8000
 DATABASE_URL=sqlite+aiosqlite:///./data/accounts.db
 ```
 
-Settings in `backend/config/settings.py`:
-- max_concurrent_requests: 200
-- request_timeout: 5 seconds
+Key settings in `backend/config/settings.py`:
+- `max_concurrent_requests`: 200
+- `request_timeout`: 5s
 - Confidence thresholds: API (95%), Browser (85%), HTTP (70%)
 
 ## Architecture
@@ -98,50 +101,40 @@ Settings in `backend/config/settings.py`:
 backend/
 ├── api/              # FastAPI REST API
 ├── config/           # Settings and platform definitions
-├── core/             # Search orchestration
-├── db/               # SQLAlchemy models
+├── core/             # Search orchestration + username variations
+├── db/               # SQLAlchemy models (Search, Account, PlatformCheck)
 └── platforms/
-    ├── base.py       # BaseVerifier pattern
-    └── verifiers/    # Three-tier verification
+    ├── base.py       # BaseVerifier + VerificationResult
+    └── verifiers/    # api.py, browser.py, http.py, wmn.py
 ```
 
-Core patterns:
-- Async generators for real-time streaming
-- Platform prioritization (popular platforms first)
-- Semaphore-based concurrency (prevents rate limiting)
-- Username variations (platform-specific patterns)
-- Background tasks (non-blocking execution)
-
-## Adding Platforms
-
-Edit `backend/config/platforms.yaml`:
+Add a new platform by editing `backend/config/platforms.yaml`:
 ```yaml
 newplatform:
   name: New Platform
   category: social
-  tier: 1
+  tier: 3
   enabled: true
   url_template: "https://example.com/{username}"
-  api_endpoint: "https://api.example.com/users/{username}"
-  verification_method: api
+  verification_method: http
 ```
 
-For complex platforms, add custom handler in appropriate verifier file.
+For platforms that need custom logic, add a `_verify_{platform_id}()` method to the appropriate verifier file.
 
 ## Tech Stack
 
 - Backend: FastAPI, SQLAlchemy, Playwright, httpx
 - Database: SQLite with async support (aiosqlite)
 - Frontend: React, Vite, Tailwind CSS, shadcn/ui
-- Deployment: https://dr.eamer.dev/antisocial/
+- Live: https://dr.eamer.dev/antisocial/
 
 ## License
 
-MIT License - see LICENSE file.
+MIT — see LICENSE file.
 
 ## Author
 
-Luke Steuber
-- Website: https://dr.eamer.dev
-- Bluesky: https://bsky.app/profile/lukesteuber.com
+**Luke Steuber**
+- Website: [lukesteuber.com](https://lukesteuber.com)
+- Bluesky: [@lukesteuber.com](https://bsky.app/profile/lukesteuber.com)
 - Email: luke@lukesteuber.com
