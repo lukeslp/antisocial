@@ -1,22 +1,22 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Search as SearchIcon, Globe } from "lucide-react";
+import { Search as SearchIcon, Zap, Globe } from "lucide-react";
 import { useState } from "react";
 import { api } from "@/lib/api";
 import { useLocation } from "wouter";
+
+type SearchMode = "quick" | "deep";
 
 export default function Search() {
   const [, setLocation] = useLocation();
   const [username, setUsername] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [deepSearch, setDeepSearch] = useState(false);
+  const [mode, setMode] = useState<SearchMode>("quick");
 
   const handleSearch = async () => {
     if (!username.trim()) {
-      toast.error("Please enter a username");
+      toast.error("Enter a username first");
       return;
     }
 
@@ -24,10 +24,14 @@ export default function Search() {
     try {
       const search = await api.createSearch({
         username: username.trim(),
-        deep_search: deepSearch,
+        deep_search: mode === "deep",
       });
 
-      toast.success(`Looking for @${username}${deepSearch ? ' everywhere' : ''}...`);
+      toast.success(
+        mode === "deep"
+          ? `Hunting @${username} across 700+ sites...`
+          : `Scanning 24 platforms for @${username}...`
+      );
       setLocation(`/results/${search.id}`);
     } catch (error: any) {
       toast.error(error.message || "Failed to start search");
@@ -37,108 +41,122 @@ export default function Search() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <main className="container max-w-2xl px-4" role="main" aria-label="Search for accounts">
-        <div className="text-center space-y-8">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <main className="w-full max-w-xl" role="main" aria-label="Search for accounts">
+        <div className="space-y-10">
+
           {/* Header */}
-          <div className="space-y-3">
-            <h1 className="text-5xl font-bold tracking-tight">
-              Social Scout
+          <div className="text-center space-y-2">
+            <h1 className="text-6xl font-bold tracking-tighter">
+              antisocial
             </h1>
-            <p className="text-xl text-muted-foreground max-w-lg mx-auto">
-              Track down those accounts you forgot you made
+            <p className="text-muted-foreground text-lg">
+              find the accounts you forgot you made
             </p>
           </div>
 
-          {/* Search Input */}
-          <div className="max-w-md mx-auto space-y-4">
+          {/* Search input */}
+          <div className="space-y-4">
             <div className="flex gap-3">
               <label htmlFor="username-input" className="sr-only">Username to search</label>
               <Input
                 id="username-input"
-                placeholder="Your username"
+                placeholder="your username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="text-lg h-12"
+                className="text-lg h-12 font-mono"
                 autoFocus
-                aria-describedby="search-help"
+                aria-describedby="mode-desc"
               />
               <Button
                 onClick={handleSearch}
                 disabled={isSearching}
                 size="lg"
-                className="px-8 h-12"
-                aria-label={isSearching ? "Search in progress" : "Start searching for accounts"}
+                className="px-8 h-12 shrink-0"
+                aria-label={isSearching ? "Search in progress" : "Start searching"}
               >
                 {isSearching ? (
                   <>
-                    <SearchIcon className="mr-2 h-5 w-5 animate-spin" aria-hidden="true" />
-                    Looking...
+                    <SearchIcon className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                    searching
                   </>
                 ) : (
                   <>
-                    <SearchIcon className="mr-2 h-5 w-5" aria-hidden="true" />
-                    Scout
+                    <SearchIcon className="mr-2 h-4 w-4" aria-hidden="true" />
+                    hunt
                   </>
                 )}
               </Button>
             </div>
 
-            {/* Deep Search Toggle */}
-            <div className="flex items-center justify-center gap-3 p-3 rounded-lg bg-card/50 border border-border/50">
-              <Switch
-                id="deep-search"
-                checked={deepSearch}
-                onCheckedChange={setDeepSearch}
-                aria-describedby="deep-search-desc"
-              />
-              <Label htmlFor="deep-search" className="flex items-center gap-2 cursor-pointer">
-                <Globe className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
-                <span className="text-sm">
-                  Go deep
-                  <span className="text-muted-foreground ml-1">
-                    ({deepSearch ? '700+' : '24'} sites)
-                  </span>
-                </span>
-              </Label>
+            {/* Mode selector — the main UX decision */}
+            <div
+              className="grid grid-cols-2 gap-3"
+              role="radiogroup"
+              aria-label="Search depth"
+              id="mode-desc"
+            >
+              <button
+                type="button"
+                role="radio"
+                aria-checked={mode === "quick"}
+                onClick={() => setMode("quick")}
+                className={[
+                  "p-4 rounded-lg border text-left transition-all",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  mode === "quick"
+                    ? "border-primary bg-primary/10 ring-1 ring-primary"
+                    : "border-border bg-card/50 hover:border-border/80 hover:bg-card/70",
+                ].join(" ")}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Zap className={`w-4 h-4 ${mode === "quick" ? "text-primary" : "text-muted-foreground"}`} aria-hidden="true" />
+                  <span className="font-semibold text-sm">Quick scan</span>
+                  {mode === "quick" && (
+                    <span className="ml-auto text-xs font-medium text-primary">default</span>
+                  )}
+                </div>
+                <div className="text-2xl font-bold font-mono tabular-nums">24</div>
+                <div className="text-xs text-muted-foreground mt-0.5">platforms · ~30 seconds</div>
+              </button>
+
+              <button
+                type="button"
+                role="radio"
+                aria-checked={mode === "deep"}
+                onClick={() => setMode("deep")}
+                className={[
+                  "p-4 rounded-lg border text-left transition-all",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  mode === "deep"
+                    ? "border-primary bg-primary/10 ring-1 ring-primary"
+                    : "border-border bg-card/50 hover:border-border/80 hover:bg-card/70",
+                ].join(" ")}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Globe className={`w-4 h-4 ${mode === "deep" ? "text-primary" : "text-muted-foreground"}`} aria-hidden="true" />
+                  <span className="font-semibold text-sm">Deep dive</span>
+                </div>
+                <div className="text-2xl font-bold font-mono tabular-nums">700+</div>
+                <div className="text-xs text-muted-foreground mt-0.5">platforms · 1–2 minutes</div>
+              </button>
             </div>
 
-            <p id="deep-search-desc" className="text-sm text-muted-foreground">
-              {deepSearch
-                ? 'Checking 700+ sites — typically 1-2 minutes, but leaves no stone unturned'
-                : 'Quick scan of 24 popular platforms — usually under 30 seconds'}
-            </p>
-            <p id="search-help" className="sr-only">
-              Enter the username you want to search for across social media platforms
+            <p className="text-xs text-muted-foreground text-center px-2">
+              {mode === "quick"
+                ? "Checks 24 high-traffic platforms — GitHub, Reddit, Twitter, Instagram, and more."
+                : <>Adds 700+ sites from the <a href="https://github.com/WebBreacher/WhatsMyName" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">WhatsMyName</a> database on top of the core 24.</>
+              }
             </p>
           </div>
 
-          {/* Simple Explanation */}
-          <div className="max-w-xl mx-auto pt-8">
-            <div className="p-6 rounded-lg bg-card/50 border border-border/50 text-left space-y-3">
-              <h3 className="font-semibold text-lg">What happens next</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Social Scout checks each platform for accounts matching your username.
-                Results appear in real-time with links to profiles and deletion tips.
-              </p>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                The "Go deep" option uses the{" "}
-                <a
-                  href="https://github.com/WebBreacher/WhatsMyName"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  WhatsMyName
-                </a>{" "}
-                database to scan 700+ additional sites beyond the core 24.
-              </p>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Mark which results are actually yours — feedback improves accuracy over time.
-              </p>
-            </div>
+          {/* What happens next */}
+          <div className="p-5 rounded-lg bg-card/40 border border-border/40 space-y-2 text-sm text-muted-foreground">
+            <p>Results come in as each platform is checked — no waiting for everything to finish.</p>
+            <p>Mark which accounts are actually yours. Feedback improves accuracy over time.</p>
           </div>
+
         </div>
       </main>
     </div>
