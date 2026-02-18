@@ -31,6 +31,8 @@ class APIVerifier(BaseVerifier):
                     return await self._verify_tiktok(client, username)
                 elif self.platform.id == "twitter":
                     return await self._verify_twitter(client, username)
+                elif self.platform.id == "npm":
+                    return await self._verify_npm(client, url, username)
                 else:
                     return await self._verify_generic(client, url, username, headers)
                     
@@ -208,6 +210,28 @@ class APIVerifier(BaseVerifier):
             pass
 
         return self._create_result(username, False, 0)
+
+    async def _verify_npm(self, client: httpx.AsyncClient, url: str, username: str) -> VerificationResult:
+        """Verify npm user via CouchDB user registry API."""
+        headers = {"User-Agent": "AccountDiscovery/1.0", "Accept": "application/json"}
+        try:
+            response = await client.get(url, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                return self._create_result(
+                    username=username,
+                    found=True,
+                    confidence=100,
+                    display_name=data.get("name") or data.get("fullname"),
+                    bio=data.get("twitterUsername") or data.get("github"),
+                    avatar_url=data.get("avatarUrl")
+                )
+            elif response.status_code == 404:
+                return self._create_result(username, False, 0)
+            else:
+                return self._create_result(username, False, 0, error=f"HTTP {response.status_code}")
+        except Exception as e:
+            return self._create_result(username, False, 0, error=str(e))
 
     async def _verify_generic(self, client: httpx.AsyncClient, url: str, username: str, headers: dict) -> VerificationResult:
         """Generic API verification."""

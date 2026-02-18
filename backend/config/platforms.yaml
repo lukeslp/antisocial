@@ -151,6 +151,12 @@ platforms:
     enabled: true
     url_template: "https://vimeo.com/{username}"
     verification_method: http
+    not_found_indicators:
+      - "Sorry, we couldn't find that page"
+      - "This page isn't available"
+      - "vimeo.com/404"
+      - "page_not_found"
+      - "The page you're looking for isn't here"
   tumblr:
     name: Tumblr
     category: blogging
@@ -179,3 +185,22 @@ platforms:
     enabled: true
     url_template: "https://gravatar.com/{username}"
     verification_method: http
+  npm:
+    name: npm
+    category: development
+    tier: 1
+    enabled: true
+    url_template: "https://www.npmjs.com/~{username}"
+    api_endpoint: "https://registry.npmjs.org/-/user/org.couchdb.user:{username}"
+    verification_method: api
+  pypi:
+    name: PyPI
+    category: development
+    tier: 3
+    enabled: true
+    url_template: "https://pypi.org/user/{username}/"
+    verification_method: http
+    not_found_indicators:
+      - "404 - page not found"
+      - "We looked everywhere but"
+      - "Hmm, we couldn't find that"

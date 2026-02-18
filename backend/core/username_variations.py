@@ -18,8 +18,9 @@ def generate_variations(username: str, platform_id: str) -> List[str]:
     # Note: Bluesky custom domain handles are case-sensitive (lowercase required)
     if platform_id == "bluesky":
         username_lower = username.lower()
-        variations.add(f"{username}.bsky.social")
+        # .bsky.social is the most common handle format - try it first
         variations.add(f"{username_lower}.bsky.social")
+        variations.add(f"{username}.bsky.social")
         # Try common domain extensions (both original case and lowercase)
         for ext in [".com", ".net", ".org", ".io", ".dev"]:
             variations.add(f"{username}{ext}")
@@ -93,6 +94,20 @@ def generate_variations(username: str, platform_id: str) -> List[str]:
         variations.add("_".join(parts))
         variations.add("-".join(parts))
     
+    # Bluesky: prioritize .bsky.social handle over bare username because bare
+    # usernames without a domain are not valid Bluesky handles and always fail.
+    if platform_id == "bluesky":
+        username_lower = username.lower()
+        bsky_handle = f"{username_lower}.bsky.social"
+        ordered = [bsky_handle]
+        # Add remaining variations excluding the .bsky.social one already added
+        rest = sorted(
+            [v for v in variations if v != bsky_handle],
+            key=lambda x: (len(x), x)
+        )
+        ordered.extend(rest)
+        return ordered
+
     # Convert to list and sort by likelihood (original first, then shorter variations)
     result = [username]  # Original always first
     other_variations = sorted(
@@ -100,7 +115,7 @@ def generate_variations(username: str, platform_id: str) -> List[str]:
         key=lambda x: (len(x), x)  # Prefer shorter, then alphabetical
     )
     result.extend(other_variations)
-    
+
     return result
 
 
