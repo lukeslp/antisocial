@@ -1,0 +1,3 @@
+[submodule "social-scout"]
+	path = social-scout
+	url = https://github.com/lukeslp/antisocial.git
