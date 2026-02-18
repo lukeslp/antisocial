@@ -102,6 +102,8 @@ platforms:
       - "This user has not yet set up their Steam Community profile"
       - "error_ctn"
       - "profile_private_info"
+      - "Steam Community :: Error"
+      - "An error was encountered"
   gitlab:
     name: GitLab
     category: development
@@ -147,16 +149,11 @@ platforms:
   vimeo:
     name: Vimeo
     category: video
-    tier: 3
+    tier: 1
     enabled: true
     url_template: "https://vimeo.com/{username}"
-    verification_method: http
-    not_found_indicators:
-      - "Sorry, we couldn't find that page"
-      - "This page isn't available"
-      - "vimeo.com/404"
-      - "page_not_found"
-      - "The page you're looking for isn't here"
+    api_endpoint: "https://vimeo.com/api/oembed.json?url=https://vimeo.com/{username}"
+    verification_method: api
   tumblr:
     name: Tumblr
     category: blogging
@@ -204,3 +201,34 @@ platforms:
       - "404 - page not found"
       - "We looked everywhere but"
       - "Hmm, we couldn't find that"
+  huggingface:
+    name: HuggingFace
+    category: development
+    tier: 1
+    enabled: true
+    url_template: "https://huggingface.co/{username}"
+    api_endpoint: "https://huggingface.co/api/users/{username}"
+    verification_method: api
+  replit:
+    name: Replit
+    category: development
+    tier: 3
+    enabled: true
+    url_template: "https://replit.com/@{username}"
+    verification_method: http
+    not_found_indicators:
+      - "404"
+      - "Page not found"
+      - "doesn't exist"
+  substack:
+    name: Substack
+    category: blogging
+    tier: 3
+    enabled: true
+    url_template: "https://{username}.substack.com"
+    verification_method: http
+    not_found_indicators:
+      - "404"
+      - "This publication does not exist"
+      - "Substack is a platform"
+      - "Page not found"
