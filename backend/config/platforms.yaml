@@ -152,7 +152,7 @@ platforms:
     tier: 1
     enabled: true
     url_template: "https://vimeo.com/{username}"
-    api_endpoint: "https://vimeo.com/api/oembed.json?url=https://vimeo.com/{username}"
+    api_endpoint: "https://vimeo.com/api/v2/{username}/info.json"
     verification_method: api
   tumblr:
     name: Tumblr
@@ -204,11 +204,10 @@ platforms:
   huggingface:
     name: HuggingFace
     category: development
-    tier: 1
+    tier: 3
     enabled: true
     url_template: "https://huggingface.co/{username}"
-    api_endpoint: "https://huggingface.co/api/users/{username}"
-    verification_method: api
+    verification_method: http
   replit:
     name: Replit
     category: development
