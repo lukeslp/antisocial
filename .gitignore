@@ -2,7 +2,6 @@
 venv/
 .venv/
 env/
-.env/
 
 # Python cache
 __pycache__/
@@ -10,6 +9,7 @@ __pycache__/
 *$py.class
 *.so
 .Python
+*.pyc
 
 # SQLite databases
 *.db
@@ -53,25 +53,21 @@ htmlcov/
 *.tmp
 *.temp
 
-# AI artifacts (humanize skill - keep out of public repos)
-CRITIC.md
-ONBOARD.md
-PROGRESS_STATUS.md
-IMPLEMENTATION_STATUS.md
-SESSION_LOG.md
-WORK_LOG.md
-AGENT_REPORT.md
-CONSOLIDATION_HISTORY.md
-EXPLORATION_SUMMARY.md
-*_IMPLEMENTATION_STATUS.md
-*_PROGRESS.md
-SUGGESTIONS.md
-WORKING_SCRIPTS_TEST_REPORT.md
-
-# geepers_quickwin baseline
-*.pyc
+# Linting / type checking cache
 .mypy_cache/
 .ruff_cache/
 
-# Aider
+# Playwright test artifacts
+.playwright-mcp/
+
+# Session artifacts
+CRITIC.md
+ONBOARD.md
+SUGGESTIONS.md
+REPO_AUDIT.md
+*_STATUS.md
+*_PROGRESS.md
+SESSION_LOG.md
+WORK_LOG.md
+AGENT_REPORT.md
 .aider*
