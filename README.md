@@ -2,9 +2,12 @@
 
 Find forgotten accounts across 30+ social media platforms using three-tier verification.
 
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
-![Live](https://img.shields.io/badge/live-dr.eamer.dev%2Fantisocial-cyan.svg)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square)
+![FastAPI](https://img.shields.io/badge/fastapi-0.100%2B-009688?style=flat-square)
+![React](https://img.shields.io/badge/react-19-61dafb?style=flat-square)
+![Playwright](https://img.shields.io/badge/playwright-browser_automation-2EAD33?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
+[![Live](https://img.shields.io/badge/live-dr.eamer.dev%2Fantisocial-cyan?style=flat-square)](https://dr.eamer.dev/antisocial/)
 
 ## Overview
 

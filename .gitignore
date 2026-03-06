@@ -72,3 +72,6 @@ WORKING_SCRIPTS_TEST_REPORT.md
 *.pyc
 .mypy_cache/
 .ruff_cache/
+
+# Aider
+.aider*
