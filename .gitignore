@@ -59,6 +59,7 @@ htmlcov/
 
 # Claude Code
 .claude/
+CLAUDE.md
 
 # Playwright test artifacts
 .playwright-mcp/
