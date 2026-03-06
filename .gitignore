@@ -57,6 +57,9 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 
+# Claude Code
+.claude/
+
 # Playwright test artifacts
 .playwright-mcp/
 
