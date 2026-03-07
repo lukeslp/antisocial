@@ -137,7 +137,5 @@ MIT — see LICENSE file.
 
 ## Author
 
-**Luke Steuber**
-- Website: [lukesteuber.com](https://lukesteuber.com)
-- Bluesky: [@lukesteuber.com](https://bsky.app/profile/lukesteuber.com)
-- Email: luke@lukesteuber.com
+**Luke Steuber** · [lukesteuber.com](https://lukesteuber.com) · [@lukesteuber.com](https://bsky.app/profile/lukesteuber.com)
+
