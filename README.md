@@ -11,11 +11,15 @@ Find forgotten accounts across 30+ social media platforms using three-tier verif
 
 ## Overview
 
-Most username discovery tools have 30-40% false positive rates because they only check HTTP status codes. This tool gets under 5% false positives through three-tier verification: official APIs first, then browser automation, then HTTP content analysis.
+That account you made in 2014 and completely forgot about? Still out there.
+
+Most username finders just check if a URL returns a 200. Works until it doesn't — false positive rates around 30-40% when platforms serve the same page whether the account exists or not.
+
+This one uses three verification tiers: official APIs first, then browser automation, then HTTP content analysis. Gets false positives down to around 5%. Not perfect — web scraping never is — but meaningfully better than a status code.
 
 ## Features
 
-- Verifies accounts via official APIs (95%+ confidence), browser automation (85%), and HTTP content analysis (70-90%)
+- Three verification tiers: official APIs (most reliable), browser automation, and HTTP content analysis — each kicking in when the previous tier isn't available
 - Searches 30+ platforms including GitHub, Reddit, Bluesky, Twitter, Instagram, TikTok, LinkedIn, YouTube
 - Tries platform-specific username patterns automatically (e.g. `luke.steuber` → `luke-steuber` for GitHub)
 - Streams results in real time as platforms respond, prioritizing high-traffic sites first
